@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BlitzPay — payroll for Philippine SMEs</title>
+<meta name="description" content="BlitzPay turns your time-clock export into payslips and a review sheet you can check before you pay. Built for Philippine SMEs still running payroll in spreadsheets." />
+
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180.png" />
+<meta name="theme-color" content="#0F1A2E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:#0F1A2E;
+  --surface:#17253E;
+  --surface-2:#1E3050;
+  --edge:#2B3F60;
+  --edge-soft:#22314C;
+  --paper:#F5F7FB;
+  --pale:#BBD3FA;
+  --muted:#8FA5C8;
+  --bolt:#ECC02E;
+
+  /* Borrowed from the payslip the engine actually generates. */
+  --slip-head:#2E3A59;
+  --slip-earn:#D9EAD3;
+  --slip-deduct:#F4CCCC;
+  --slip-net-bg:#E8F5E9;
+  --slip-net-ink:#1B5E20;
+
+  --display:"Archivo Black",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+
+  --wrap:1080px;
+  --gut:clamp(20px,5vw,48px);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+.wrap{max-width:var(--wrap);margin-inline:auto;padding-inline:var(--gut)}
+
+a{color:var(--pale);text-decoration:none}
+a:hover,a:focus-visible{color:var(--bolt)}
+:focus-visible{outline:2px solid var(--bolt);outline-offset:3px;border-radius:2px}
+
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- top bar ---------- */
+.bar{border-bottom:1px solid var(--edge-soft)}
+.bar .wrap{display:flex;align-items:center;gap:14px;padding-block:18px}
+.mark{width:34px;height:34px;flex:0 0 34px}
+.wordmark{font-family:var(--display);font-size:1.18rem;letter-spacing:.02em;line-height:1}
+.pill{
+  margin-left:auto;font-family:var(--mono);font-size:.68rem;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--pale);
+  border:1px solid var(--edge);border-radius:999px;padding:5px 12px;white-space:nowrap;
+}
+
+/* ---------- hero ---------- */
+.hero .wrap{
+  display:grid;grid-template-columns:1fr;gap:clamp(38px,6vw,64px);
+  padding-block:clamp(52px,9vw,96px) clamp(44px,7vw,80px);align-items:center;
+}
+@media(min-width:920px){.hero .wrap{grid-template-columns:1fr 1fr}}
+
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;font-weight:500;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--bolt);margin-bottom:20px;
+}
+h1{
+  font-family:var(--display);
+  font-size:clamp(2.3rem,5.6vw,3.9rem);
+  line-height:1.02;letter-spacing:-.012em;text-wrap:balance;margin-bottom:22px;
+}
+h1 .em{color:var(--bolt)}
+.lede{font-size:clamp(1.02rem,1.7vw,1.16rem);color:var(--pale);max-width:46ch;margin-bottom:30px}
+
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{
+  font-family:var(--body);font-weight:600;font-size:.96rem;
+  padding:13px 22px;border-radius:6px;border:1px solid transparent;display:inline-block;
+  transition:transform .12s ease,background .12s ease,border-color .12s ease;
+}
+.btn-primary{background:var(--bolt);color:#22190A}
+.btn-primary:hover,.btn-primary:focus-visible{background:#F6CE45;color:#22190A;transform:translateY(-1px)}
+.btn-ghost{border-color:var(--edge);color:var(--paper)}
+.btn-ghost:hover,.btn-ghost:focus-visible{border-color:var(--pale);color:var(--paper);transform:translateY(-1px)}
+
+/* ---------- the payslip (signature) ---------- */
+.slip-stage{display:flex;justify-content:center}
+.slip{
+  width:100%;max-width:440px;background:var(--paper);color:#1A2233;
+  border-radius:8px;overflow:hidden;
+  box-shadow:0 26px 60px -26px rgba(0,0,0,.72),0 0 0 1px rgba(187,211,250,.10);
+}
+.slip-head{
+  background:var(--slip-head);color:#fff;padding:15px 20px;
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+}
+.slip-head b{font-family:var(--display);font-size:1.02rem;letter-spacing:.01em}
+.slip-head span{font-family:var(--mono);font-size:.7rem;color:#C6D3EC}
+
+.slip-meta{display:flex;justify-content:space-between;gap:10px;padding:12px 20px;border-bottom:1px solid #E2E7F0}
+.slip-meta div{display:flex;flex-direction:column;gap:2px}
+.slip-meta dt{font-size:.62rem;letter-spacing:.11em;text-transform:uppercase;color:#6B7488;font-weight:600}
+.slip-meta dd{font-size:.9rem;font-weight:600}
+
+.band{
+  padding:7px 20px;font-size:.63rem;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:#33404F;
+}
+.band-earn{background:var(--slip-earn)}
+.band-deduct{background:var(--slip-deduct)}
+
+.line{
+  display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+  padding:8px 20px;font-size:.88rem;border-bottom:1px solid #EDF0F5;
+}
+.line span:first-child{color:#48526A}
+.line .num{font-weight:500}
+.line.sub .num{color:#8A93A6}
+
+.slip-net{
+  display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+  padding:15px 20px;background:var(--slip-net-bg);color:var(--slip-net-ink);
+}
+.slip-net b{font-family:var(--body);font-weight:600;font-size:.96rem}
+.slip-net .num{font-size:1.32rem;font-weight:600}
+
+.slip-foot{
+  padding:9px 20px;font-family:var(--mono);font-size:.63rem;color:#7C8598;
+  border-top:1px solid #E2E7F0;text-align:center;
+}
+
+/* load-in choreography */
+.anim{opacity:0;transform:translateY(7px);animation:rise .42s cubic-bezier(.22,.7,.3,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+
+/* ---------- generic section ---------- */
+.sect{border-top:1px solid var(--edge-soft)}
+.sect .wrap{padding-block:clamp(48px,7vw,78px)}
+.kicker{
+  font-family:var(--mono);font-size:.7rem;font-weight:500;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:12px;
+}
+h2{
+  font-family:var(--display);font-size:clamp(1.5rem,3vw,2.1rem);
+  line-height:1.14;letter-spacing:-.008em;text-wrap:balance;margin-bottom:16px;
+}
+.sect-lede{color:var(--pale);max-width:56ch;font-size:1.02rem}
+
+/* ---------- problem list ---------- */
+.pains{list-style:none;display:grid;gap:1px;background:var(--edge-soft);
+  border:1px solid var(--edge-soft);border-radius:8px;overflow:hidden;margin-top:30px}
+@media(min-width:760px){.pains{grid-template-columns:repeat(3,1fr)}}
+.pains li{background:var(--surface);padding:22px 20px;display:flex;flex-direction:column;gap:7px}
+.pains b{font-size:.98rem;font-weight:600}
+.pains p{color:var(--muted);font-size:.92rem;line-height:1.55}
+
+/* ---------- stages (a real sequence, so numbered) ---------- */
+.stages{list-style:none;counter-reset:s;display:grid;gap:14px;margin-top:32px}
+@media(min-width:820px){.stages{grid-template-columns:repeat(3,1fr)}}
+.stages li{
+  counter-increment:s;background:var(--surface);border:1px solid var(--edge-soft);
+  border-radius:8px;padding:24px 22px 22px;position:relative;
+  display:flex;flex-direction:column;gap:8px;
+}
+.stages li::before{
+  content:counter(s,decimal-leading-zero);
+  font-family:var(--mono);font-size:.72rem;font-weight:600;color:var(--bolt);
+  letter-spacing:.06em;
+}
+.stages h3{font-size:1.02rem;font-weight:600}
+.stages p{color:var(--muted);font-size:.92rem;line-height:1.55}
+.stages code{font-family:var(--mono);font-size:.82em;color:var(--pale)}
+
+/* ---------- deliverables ---------- */
+.gets{display:grid;gap:14px;margin-top:30px}
+@media(min-width:760px){.gets{grid-template-columns:1fr 1fr}}
+.get{background:var(--surface);border:1px solid var(--edge-soft);border-radius:8px;padding:24px 22px;
+  display:flex;flex-direction:column;gap:9px}
+.get .tag{
+  font-family:var(--mono);font-size:.64rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink);background:var(--pale);border-radius:3px;padding:3px 8px;align-self:flex-start;font-weight:600;
+}
+.get.for-owner .tag{background:var(--bolt)}
+.get h3{font-size:1.06rem;font-weight:600}
+.get p{color:var(--muted);font-size:.93rem;line-height:1.55}
+
+/* ---------- close ---------- */
+.close{border-top:1px solid var(--edge-soft);background:var(--surface)}
+.close .wrap{padding-block:clamp(48px,7vw,74px);text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:16px}
+.close h2{margin-bottom:0}
+.close p{color:var(--pale);max-width:48ch}
+.close .cta-row{justify-content:center;margin-top:6px}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--edge-soft)}
+footer .wrap{padding-block:26px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+footer .who{font-family:var(--mono);font-size:.76rem;color:var(--muted)}
+footer nav{margin-left:auto;display:flex;gap:20px;flex-wrap:wrap}
+footer nav a{font-size:.86rem}
+
+@media (prefers-reduced-motion:reduce){
+  .anim{animation:none;opacity:1;transform:none}
+  .btn{transition:none}
+  *{scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <img class="mark" src="blitzpay-mark-96.png" alt="" width="34" height="34" decoding="async" />
+    <span class="wordmark">BLITZPAY</span>
+    <span class="pill">Pilot in progress</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">Payroll for Philippine SMEs</p>
+      <h1>Your time clock already has the data.<br><span class="em">Stop retyping it.</span></h1>
+      <p class="lede">
+        BlitzPay reads the export from your POS or time-clock app and returns a payslip for
+        every employee — plus a review sheet showing anything that needs your approval before
+        you release payment.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#talk">Request early access</a>
+        <a class="btn btn-ghost" href="#how">See how it works</a>
+      </div>
+    </div>
+
+    <div class="slip-stage">
+      <!-- The artifact the product actually produces. -->
+      <article class="slip anim" style="animation-delay:.05s" aria-label="Example payslip">
+        <div class="slip-head">
+          <b>PAYSLIP</b>
+          <span>CUT-OFF 01–15</span>
+        </div>
+
+        <!-- Illustrative figures only. Deliberately invented, not taken from any
+             real employee's payroll. "Dela Cruz" is the PH placeholder name. -->
+        <div class="slip-meta">
+          <div><dt>Employee</dt><dd>J. Dela Cruz</dd></div>
+          <div><dt>Days worked</dt><dd class="num">11</dd></div>
+          <div><dt>Hours</dt><dd class="num">102.50</dd></div>
+        </div>
+
+        <p class="band band-earn">Earnings</p>
+        <div class="line anim" style="animation-delay:.30s"><span>Basic pay</span><span class="num">₱8,745.00</span></div>
+        <div class="line anim" style="animation-delay:.38s"><span>Overtime premium</span><span class="num">₱412.65</span></div>
+        <div class="line anim" style="animation-delay:.46s"><span>Night differential</span><span class="num">₱108.20</span></div>
+        <div class="line anim" style="animation-delay:.54s"><span>Service charge share</span><span class="num">₱2,180.40</span></div>
+
+        <p class="band band-deduct">Deductions</p>
+        <div class="line sub anim" style="animation-delay:.66s"><span>SSS · PhilHealth · Pag-IBIG</span><span class="num">−₱1,375.00</span></div>
+        <div class="line sub anim" style="animation-delay:.74s"><span>Cash advance</span><span class="num">−₱500.00</span></div>
+
+        <div class="slip-net anim" style="animation-delay:.90s">
+          <b>Take-home pay</b>
+          <span class="num" id="net" data-to="9571.25">₱0.00</span>
+        </div>
+
+        <p class="slip-foot">Generated from 11 clock entries · reviewed before release</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="sect">
+  <div class="wrap">
+    <p class="kicker">The way it works now</p>
+    <h2>Payroll day is a spreadsheet and a long evening</h2>
+    <p class="sect-lede">
+      Most growing SMEs run payroll by exporting the time logs, pasting them into a sheet, and
+      fixing the rest by hand. It works — until it quietly doesn't.
+    </p>
+
+    <ul class="pains">
+      <li>
+        <b>Every cutoff starts from zero</b>
+        <p>Copy the export, paste it in, re-check the formulas, chase the shifts that look wrong. Same work, twice a month, forever.</p>
+      </li>
+      <li>
+        <b>Holidays are checked by hand</b>
+        <p>Someone has to remember which dates were regular holidays, who worked them, and who is owed premium pay for it.</p>
+      </li>
+      <li>
+        <b>A blank cell costs real money</b>
+        <p>One row left unfinished and someone is short-paid. Nothing in a spreadsheet tells you it happened.</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="sect" id="how">
+  <div class="wrap">
+    <p class="kicker">How BlitzPay works</p>
+    <h2>Three steps, and you keep the final say</h2>
+    <p class="sect-lede">
+      No new hardware and no new app for your staff. They clock in exactly as they do today.
+    </p>
+
+    <ol class="stages">
+      <li>
+        <h3>Send the export</h3>
+        <p>Drop in the <code>.csv</code> or <code>.xlsx</code> your time-clock app already produces. No re-typing, no new system for your team to learn.</p>
+      </li>
+      <li>
+        <h3>We compute the cutoff</h3>
+        <p>Hours, overtime, night differential, holidays, government deductions and service charge — using <em>your</em> pay rules, not a generic template.</p>
+      </li>
+      <li>
+        <h3>Review, then release</h3>
+        <p>Anything unusual — a missing clock-out, an unusually long shift — is flagged for you to approve or correct. Nothing is paid without your sign-off.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="sect">
+  <div class="wrap">
+    <p class="kicker">What you get each cutoff</p>
+    <h2>One run, two outputs</h2>
+
+    <div class="gets">
+      <div class="get">
+        <span class="tag">For your staff</span>
+        <h3>A payslip each</h3>
+        <p>
+          A clear breakdown of earnings, deductions and take-home pay — the kind of payslip an
+          employee can actually read without asking you to explain it.
+        </p>
+      </div>
+      <div class="get for-owner">
+        <span class="tag">For you</span>
+        <h3>A review sheet</h3>
+        <p>
+          Every employee's totals in one place, with flagged time logs and the reason each one
+          needs a look. Check it, approve it, then pay.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="close" id="talk">
+  <div class="wrap">
+    <h2>We're onboarding pilot businesses now</h2>
+    <p>
+      If you run payroll for a growing team and it still lives in a spreadsheet, we'd like to
+      hear how you do it. Early conversations shape what we build next.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://www.linkedin.com/company/blitzpaypayroll" target="_blank" rel="noopener noreferrer">Message us on LinkedIn</a>
+      <a class="btn btn-ghost" href="https://www.facebook.com/profile.php?id=61588697439462" target="_blank" rel="noopener noreferrer">Message us on Facebook</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span class="who">BlitzPay — Philippines</span>
+    <nav>
+      <a href="https://www.linkedin.com/company/blitzpaypayroll" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      <a href="https://www.facebook.com/profile.php?id=61588697439462" target="_blank" rel="noopener noreferrer">Facebook</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+// Take-home pay counts up as the last beat of the load sequence.
+// The final value is in the markup, so this is enhancement only.
+(function () {
+  var el = document.getElementById('net');
+  if (!el) return;
+  var target = parseFloat(el.dataset.to);
+  var peso = function (v) {
+    return '₱' + v.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.textContent = peso(target);
+    return;
+  }
+  var DUR = 900, DELAY = 950, start = null, done = false;
+  function settle() {
+    if (done) return;
+    done = true;
+    el.textContent = peso(target);
+  }
+  function step(now) {
+    if (done) return;
+    if (start === null) start = now;
+    var p = Math.min((now - start) / DUR, 1);
+    if (p >= 1) return settle();
+    el.textContent = peso(target * (1 - Math.pow(1 - p, 3)));
+    requestAnimationFrame(step);
+  }
+  setTimeout(function () { requestAnimationFrame(step); }, DELAY);
+  // requestAnimationFrame pauses in a backgrounded tab, which could leave the
+  // figure stranded mid-count. Guarantee it lands on the real value regardless.
+  setTimeout(settle, DELAY + DUR + 250);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && start !== null) settle();
+  });
+})();
+</script>
+
+</body>
+</html>
