@@ -36,9 +36,12 @@
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
 
-  --wrap:1080px;
-  --gut:clamp(20px,5vw,48px);
+  --wrap:1240px;
+  --gut:clamp(18px,3.2vw,34px);
+  --bar-h:66px;
 }
+
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--bar-h) + 18px)}
 
 *{box-sizing:border-box;margin:0;padding:0}
 
@@ -60,15 +63,27 @@ a:hover,a:focus-visible{color:var(--bolt)}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
 /* ---------- top bar ---------- */
-.bar{border-bottom:1px solid var(--edge-soft)}
-.bar .wrap{display:flex;align-items:center;gap:14px;padding-block:18px}
-.mark{width:34px;height:34px;flex:0 0 34px}
-.wordmark{font-family:var(--display);font-size:1.18rem;letter-spacing:.02em;line-height:1}
-.pill{
-  margin-left:auto;font-family:var(--mono);font-size:.68rem;font-weight:500;
-  letter-spacing:.14em;text-transform:uppercase;color:var(--pale);
-  border:1px solid var(--edge);border-radius:999px;padding:5px 12px;white-space:nowrap;
+.bar{
+  position:sticky;top:0;z-index:20;border-bottom:1px solid var(--edge-soft);
+  background:rgba(15,26,46,.86);backdrop-filter:saturate(1.4) blur(10px);
 }
+.bar .wrap{display:flex;align-items:center;gap:14px;height:var(--bar-h)}
+.mark{width:30px;height:30px;flex:0 0 30px}
+.wordmark{font-family:var(--display);font-size:1.08rem;letter-spacing:.02em;line-height:1}
+.bar nav{margin-left:auto;display:flex;align-items:center;gap:6px}
+.bar nav a:not(.btn){
+  color:var(--muted);font-size:.9rem;font-weight:500;padding:8px 12px;border-radius:6px;
+}
+.bar nav a:not(.btn):hover,.bar nav a:not(.btn):focus-visible{color:var(--paper);background:var(--surface)}
+.bar nav a[aria-current="true"]{color:var(--paper);box-shadow:inset 0 -2px 0 var(--bolt)}
+.bar .btn{margin-left:8px;padding:9px 16px;font-size:.88rem}
+@media(max-width:860px){.bar nav a:not(.btn){display:none}}
+.pill{
+  font-family:var(--mono);font-size:.66rem;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--pale);
+  border:1px solid var(--edge);border-radius:999px;padding:4px 11px;white-space:nowrap;
+}
+@media(max-width:620px){.pill{display:none}}
 
 /* ---------- hero ---------- */
 .hero .wrap{
@@ -90,6 +105,31 @@ h1 .em{color:var(--bolt)}
 .lede{font-size:clamp(1.02rem,1.7vw,1.16rem);color:var(--pale);max-width:46ch;margin-bottom:30px}
 
 .cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+/* ---------- rules grid ---------- */
+.rules{list-style:none;display:grid;gap:14px;margin-top:30px}
+@media(min-width:760px){.rules{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1040px){.rules{grid-template-columns:repeat(3,1fr)}}
+.rules li{
+  background:var(--surface);border:1px solid var(--edge-soft);border-radius:8px;padding:22px 20px;
+  display:flex;flex-direction:column;gap:7px;
+}
+.rules b{font-size:.98rem;font-weight:600}
+.rules p{color:var(--muted);font-size:.9rem;line-height:1.55}
+.rules .law{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--pale)}
+
+/* ---------- faq ---------- */
+.faq{margin-top:28px;border-top:1px solid var(--edge-soft)}
+.faq details{border-bottom:1px solid var(--edge-soft)}
+.faq summary{
+  cursor:pointer;list-style:none;padding:18px 0;font-weight:600;font-size:1.02rem;
+  display:flex;justify-content:space-between;gap:20px;align-items:center;
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-family:var(--mono);color:var(--bolt);font-size:1.2rem;line-height:1}
+.faq details[open] summary::after{content:"−"}
+.faq summary:hover{color:var(--bolt)}
+.faq p{color:var(--muted);font-size:.95rem;line-height:1.6;padding-bottom:20px;max-width:70ch}
 .btn{
   font-family:var(--body);font-weight:600;font-size:.96rem;
   padding:13px 22px;border-radius:6px;border:1px solid transparent;display:inline-block;
@@ -211,8 +251,8 @@ h2{
 
 /* ---------- footer ---------- */
 footer{border-top:1px solid var(--edge-soft)}
-footer .wrap{padding-block:26px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
-footer .who{font-family:var(--mono);font-size:.76rem;color:var(--muted)}
+footer .wrap{padding-block:30px;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center}
+footer .who{font-family:var(--mono);font-size:.76rem;color:var(--muted);line-height:1.7}
 footer nav{margin-left:auto;display:flex;gap:20px;flex-wrap:wrap}
 footer nav a{font-size:.86rem}
 
@@ -227,9 +267,16 @@ footer nav a{font-size:.86rem}
 
 <header class="bar">
   <div class="wrap">
-    <img class="mark" src="blitzpay-mark-96.png" alt="" width="34" height="34" decoding="async" />
+    <img class="mark" src="blitzpay-mark-96.png" alt="" width="30" height="30" decoding="async" />
     <span class="wordmark">BLITZPAY</span>
     <span class="pill">Pilot in progress</span>
+    <nav aria-label="Sections">
+      <a href="#problem">The Problem</a>
+      <a href="#how">How It Works</a>
+      <a href="#rules">PH Pay Rules</a>
+      <a href="#faq">FAQs</a>
+      <a class="btn btn-primary" href="#talk">Request early access</a>
+    </nav>
   </div>
 </header>
 
@@ -286,7 +333,7 @@ footer nav a{font-size:.86rem}
   </div>
 </section>
 
-<section class="sect">
+<section class="sect" id="problem">
   <div class="wrap">
     <p class="kicker">The way it works now</p>
     <h2>Payroll day is a spreadsheet and a long evening</h2>
@@ -363,6 +410,72 @@ footer nav a{font-size:.86rem}
   </div>
 </section>
 
+<section class="sect" id="rules">
+  <div class="wrap">
+    <p class="kicker">Built for Philippine payroll</p>
+    <h2>The rules that make local payroll fiddly, handled</h2>
+    <p class="sect-lede">
+      Each one is a setting, not a hard-coded assumption. Your rates and your practice decide the
+      figures, and any rule that changes pay is switched on deliberately.
+    </p>
+
+    <ul class="rules">
+      <li>
+        <span class="law">Holiday pay</span>
+        <b>Regular and special days</b>
+        <p>Government rates for regular holidays and special non-working days, including work on the day itself, applied per date in the cutoff.</p>
+      </li>
+      <li>
+        <span class="law">Labor Code Art. 86</span>
+        <b>Night differential</b>
+        <p>An extra 10% for every hour worked between 10 PM and 6 AM, counted from the clock-ins themselves.</p>
+      </li>
+      <li>
+        <span class="law">Service charge</span>
+        <b>Shared by days worked</b>
+        <p>The pool from your sales report, split across eligible staff by the days each of them actually worked, per branch.</p>
+      </li>
+      <li>
+        <span class="law">Contributions</span>
+        <b>SSS, PhilHealth, Pag-IBIG</b>
+        <p>Deducted on the cutoff you choose, for the staff they apply to, with new hires held until their paperwork is complete.</p>
+      </li>
+      <li>
+        <span class="law">Overtime</span>
+        <b>Premiums on your terms</b>
+        <p>Overtime beyond the standard day, at the rate your business already uses, not a generic template.</p>
+      </li>
+      <li>
+        <span class="law">Allowances and advances</span>
+        <b>The rest of the payslip</b>
+        <p>Daily allowances, incentives and cash advances, entered once per cutoff and carried into every payslip.</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="sect" id="faq">
+  <div class="wrap">
+    <p class="kicker">Questions we get</p>
+    <h2>Before you ask</h2>
+
+    <div class="faq">
+      <details>
+        <summary>Do my staff need to learn a new app?</summary>
+        <p>No. They clock in and out exactly as they do today. BlitzPay reads the export your existing time clock or POS already produces.</p>
+      </details>
+      <details>
+        <summary>What happens when the time logs have mistakes?</summary>
+        <p>They get flagged instead of quietly paid: a missing clock-out, a shift that runs past midnight, a person in the logs who isn't on your staff list. You correct them with a reason, and the original export is never edited.</p>
+      </details>
+      <details>
+        <summary>Can I see what changed since the last run?</summary>
+        <p>Yes. Every figure that moves is listed against the previous run, and every correction records who made it, when, and why. Payroll you can explain to an employee, or an auditor.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
 <section class="close" id="talk">
   <div class="wrap">
     <h2>We're onboarding pilot businesses now</h2>
@@ -379,7 +492,7 @@ footer nav a{font-size:.86rem}
 
 <footer>
   <div class="wrap">
-    <span class="who">BlitzPay — Philippines</span>
+    <span class="who">BlitzPay — Philippines<br>Payroll software for growing SMEs</span>
     <nav>
       <a href="https://www.linkedin.com/company/blitzpaypayroll" target="_blank" rel="noopener noreferrer">LinkedIn</a>
       <a href="https://www.facebook.com/profile.php?id=61588697439462" target="_blank" rel="noopener noreferrer">Facebook</a>
@@ -422,6 +535,32 @@ footer nav a{font-size:.86rem}
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible' && start !== null) settle();
   });
+})();
+</script>
+
+<script>
+// The top bar marks the section you're currently reading. Links work without it.
+(function () {
+  var links = {}, sections = [];
+  document.querySelectorAll('.bar nav a[href^="#"]').forEach(function (a) {
+    var section = document.querySelector(a.getAttribute('href'));
+    if (!section) return;
+    links[section.id] = a;
+    sections.push(section);
+  });
+  if (!('IntersectionObserver' in window) || !sections.length) return;
+  var seen = new Set();
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) seen.add(entry.target.id); else seen.delete(entry.target.id);
+    });
+    var current = sections.filter(function (s) { return seen.has(s.id); })[0];
+    Object.keys(links).forEach(function (id) {
+      if (current && id === current.id) links[id].setAttribute('aria-current', 'true');
+      else links[id].removeAttribute('aria-current');
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  sections.forEach(function (s) { observer.observe(s); });
 })();
 </script>
 
