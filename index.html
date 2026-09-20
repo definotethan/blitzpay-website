@@ -68,7 +68,10 @@ a:hover,a:focus-visible{color:var(--bolt)}
   background:rgba(15,26,46,.86);backdrop-filter:saturate(1.4) blur(10px);
 }
 .bar .wrap{display:flex;align-items:center;gap:14px;height:var(--bar-h)}
-.mark{width:30px;height:30px;flex:0 0 30px}
+.home{display:flex;align-items:center;gap:11px;color:var(--paper);border-radius:6px}
+.home:hover,.home:focus-visible{color:var(--paper)}
+.home:hover .mark{transform:scale(1.06)}
+.mark{width:30px;height:30px;flex:0 0 30px;transition:transform .12s ease}
 .wordmark{font-family:var(--display);font-size:1.08rem;letter-spacing:.02em;line-height:1}
 .bar nav{margin-left:auto;display:flex;align-items:center;gap:6px}
 .bar nav a:not(.btn){
@@ -258,6 +261,7 @@ footer nav a{font-size:.86rem}
 
 @media (prefers-reduced-motion:reduce){
   .anim{animation:none;opacity:1;transform:none}
+  .home:hover .mark{transform:none}
   .btn{transition:none}
   *{scroll-behavior:auto!important}
 }
@@ -265,10 +269,14 @@ footer nav a{font-size:.86rem}
 </head>
 <body>
 
+<span id="top" aria-hidden="true"></span>
+
 <header class="bar">
   <div class="wrap">
-    <img class="mark" src="blitzpay-mark-96.png" alt="" width="30" height="30" decoding="async" />
-    <span class="wordmark">BLITZPAY</span>
+    <a class="home" href="#top" aria-label="BlitzPay — back to top">
+      <img class="mark" src="blitzpay-mark-96.png" alt="" width="30" height="30" decoding="async" />
+      <span class="wordmark">BLITZPAY</span>
+    </a>
     <span class="pill">Pilot in progress</span>
     <nav aria-label="Sections">
       <a href="#problem">The Problem</a>
@@ -534,6 +542,22 @@ footer nav a{font-size:.86rem}
   setTimeout(settle, DELAY + DUR + 250);
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible' && start !== null) settle();
+  });
+})();
+</script>
+
+<script>
+// Clicking the logo goes back to the very top. Handled here rather than left to
+// the #top link alone: a browser ignores a link to the address it is already on,
+// so a second click would do nothing. The link still works without JavaScript.
+(function () {
+  var home = document.querySelector('a.home');
+  if (!home) return;
+  home.addEventListener('click', function (event) {
+    event.preventDefault();
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    history.replaceState(null, '', location.pathname + location.search);
   });
 })();
 </script>
